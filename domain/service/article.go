@@ -44,6 +44,6 @@ func (s ArticleService) CreateArticle(title string, description string, body str
 	return result, err
 }
 
-func NewArticleService(articleRepository repository.ArticleRepository) ArticleService {
-	return ArticleService{articleRepository: articleRepository}
+func NewArticleService(articleRepository repository.ArticleRepository) *ArticleService {
+	return &ArticleService{articleRepository: articleRepository}
 }

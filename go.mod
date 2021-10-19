@@ -3,6 +3,7 @@ module article
 go 1.16
 
 require (
+	github.com/golang/mock v1.6.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/onsi/ginkgo v1.16.5

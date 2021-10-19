@@ -18,6 +18,10 @@ var _ = Describe("Article", func() {
 		got := model.NewArticle(slug, title, description, body, authorId)
 
 		Expect(got.Slug()).To(Equal(slug))
+		Expect(got.Title()).To(Equal(title))
+		Expect(got.Description()).To(Equal(description))
+		Expect(got.Body()).To(Equal(body))
+		Expect(got.AuthorId()).To(Equal(authorId))
 	})
 
 	It("can set createdAt", func() {
