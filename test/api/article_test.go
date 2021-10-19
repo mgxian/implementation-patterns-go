@@ -14,20 +14,23 @@ import (
 )
 
 var _ = Describe("Article", func() {
-	address := "127.0.0.1:6666"
-	BeforeEach(func() {
+	var (
+		address = "127.0.0.1:6666"
+	)
+
+	BeforeSuite(func() {
 		go article.RunAt(address)
 	})
 
 	It("should create an article", func() {
 		bodyJson := `
-{
-      "title": "Fake Title",
-      "description": "Description",
-      "body": "Something",
-      "author_id": 1 
-}
-`
+		{
+			  "title": "Fake Title",
+			  "description": "Description",
+			  "body": "Something",
+			  "author_id": 1 
+		}
+		`
 		var err error
 		var resp *http.Response
 		var article service.ArticleDTO
@@ -47,5 +50,31 @@ var _ = Describe("Article", func() {
 		Expect(article.AuthorId).To(Equal(1))
 		Expect(article.CreatedAt).NotTo(BeZero())
 		Expect(article.UpdatedAt).NotTo(BeZero())
+	})
+
+	It("should return status code 409 when the article already exists", func() {
+		bodyJson := `
+		{
+			  "title": "Fake Title",
+			  "description": "Description",
+			  "body": "Something",
+			  "author_id": 1 
+		}
+		`
+		var err error
+		var resp *http.Response
+		Eventually(func() error {
+			url := fmt.Sprintf("http://%s%s", address, "/articles")
+			resp, err = http.Post(url, echo.MIMEApplicationJSON, strings.NewReader(bodyJson))
+			return err
+		}).ShouldNot(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusConflict))
+		content, err := ioutil.ReadAll(resp.Body)
+		want := `
+		{
+			"message": "the article with slug fake-title already exists"
+		}
+		`
+		Expect(content).To(MatchJSON(want))
 	})
 })

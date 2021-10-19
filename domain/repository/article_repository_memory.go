@@ -18,6 +18,11 @@ func (m *ArticleRepositoryMemory) Save(article model.Article) (model.Article, er
 	return article, nil
 }
 
+func (m *ArticleRepositoryMemory) ExistsBySlug(slug string) bool {
+	_, ok := m.articles[slug]
+	return ok
+}
+
 func NewArticlesRepositoryMemory(clock capability.Clock) *ArticleRepositoryMemory {
 	return &ArticleRepositoryMemory{
 		clock:    clock,

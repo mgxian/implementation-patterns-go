@@ -3,6 +3,7 @@ package service
 import (
 	"article/domain/model"
 	"article/domain/repository"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -33,13 +34,32 @@ func NewArticleDTOFromArticle(article model.Article) ArticleDTO {
 	}
 }
 
+type ArticleExistedError struct {
+	slug string
+}
+
+func NewArticleExistsError() ArticleExistedError {
+	return ArticleExistedError{}
+}
+
+func (e ArticleExistedError) WithSlug(slug string) ArticleExistedError {
+	return ArticleExistedError{slug: slug}
+}
+
+func (e ArticleExistedError) Error() string {
+	return fmt.Sprintf("the article with slug %s already exists", e.slug)
+}
+
 type ArticleService struct {
 	articleRepository repository.ArticleRepository
 }
 
 func (s ArticleService) CreateArticle(title string, description string, body string, authorId int) (model.Article, error) {
-	slug := strings.Replace(title, " ", "-", -1)
-	article := model.NewArticle(strings.ToLower(slug), title, description, body, authorId)
+	slug := strings.ToLower(strings.Replace(title, " ", "-", -1))
+	if s.articleRepository.ExistsBySlug(slug) {
+		return model.Article{}, NewArticleExistsError().WithSlug(slug)
+	}
+	article := model.NewArticle(slug, title, description, body, authorId)
 	result, err := s.articleRepository.Save(article)
 	return result, err
 }

@@ -2,6 +2,7 @@ package controller_test
 
 import (
 	"article/domain/model"
+	"article/domain/service"
 	"article/domain/service/mock"
 	"article/protocol/controller"
 	clock "article/provider/clock/mock"
@@ -86,6 +87,37 @@ var _ = Describe("Article", func() {
 		`
 
 		Expect(rec.Code).To(Equal(http.StatusCreated))
+		Expect(rec.Body.String()).To(MatchJSON(want))
+	})
+
+	It("should return 409 status code when article already exists", func() {
+		bodyJson := `
+		{
+			"title": "Fake Article",
+			"description": "Description",
+			"body": "Something",
+			"author_id": 1
+		}
+		`
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodPost, "/articles", strings.NewReader(bodyJson))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		articleService.EXPECT().
+			CreateArticle(gomock.Eq("Fake Article"), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(model.Article{}, service.NewArticleExistsError().WithSlug("fake-article"))
+
+		_ = articleController.CreateArticle(c)
+
+		want := `
+		{
+			 "message": "the article with slug fake-article already exists"
+		}
+		`
+
+		Expect(rec.Code).To(Equal(http.StatusConflict))
 		Expect(rec.Body.String()).To(MatchJSON(want))
 	})
 })

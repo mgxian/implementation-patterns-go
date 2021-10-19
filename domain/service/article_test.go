@@ -30,6 +30,7 @@ var _ = Describe("Article", func() {
 
 	It("should create an article", func() {
 		article := model.NewArticle("fake-article", "Fake Article", "Description", "Something", 1)
+		articleRepository.EXPECT().ExistsBySlug(gomock.Any()).Return(false)
 		articleRepository.EXPECT().Save(gomock.Any()).DoAndReturn(func(article model.Article) (model.Article, error) {
 			now := time.Now()
 			article.SetCreatedAt(now)
@@ -60,5 +61,15 @@ var _ = Describe("Article", func() {
 		Expect(articleDTO.Body).To(Equal(article.Body()))
 		Expect(articleDTO.CreatedAt).To(Equal(article.CreatedAt()))
 		Expect(articleDTO.UpdatedAt).To(Equal(article.UpdatedAt()))
+	})
+
+	It("should return error with message when slug already exists", func() {
+		articleRepository.EXPECT().ExistsBySlug(gomock.Any()).Return(true)
+
+		got, err := articleService.CreateArticle("Fake Article", "Description", "Something", 1)
+
+		Expect(err).To(HaveOccurred())
+		Expect(err).To(Equal(service.NewArticleExistsError().WithSlug("fake-article")))
+		Expect(got).To(BeZero())
 	})
 })

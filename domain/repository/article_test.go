@@ -42,4 +42,14 @@ var _ = Describe("Article", func() {
 		Expect(got.CreatedAt()).To(Equal(now))
 		Expect(got.UpdatedAt()).To(Equal(now))
 	})
+
+	It("can check if an article exists", func() {
+		now := time.Now()
+		clock.EXPECT().Now().Return(now)
+		article := model.NewArticle("fake-article", "Fake Article", "Description", "Something", 1)
+		_, err := articleRepository.Save(article)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(articleRepository.ExistsBySlug("fake-article")).To(BeTrue())
+	})
 })

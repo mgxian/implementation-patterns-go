@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+type ErrorResponse struct {
+	Message string `json:"message,omitempty"`
+}
+
 type ArticleController struct {
 	articleService service.ArticleServiceInterface
 }
@@ -17,11 +21,17 @@ func (ac ArticleController) CreateArticle(c echo.Context) error {
 	}
 
 	article, err := ac.articleService.CreateArticle(request.Title, request.Description, request.Body, request.AuthorId)
-	if err != nil {
-		return err
+	if err == nil {
+		return c.JSON(http.StatusCreated, service.NewArticleDTOFromArticle(article))
 	}
 
-	return c.JSON(http.StatusCreated, service.NewArticleDTOFromArticle(article))
+	if _, ok := err.(service.ArticleExistedError); ok {
+		return c.JSON(http.StatusConflict, ErrorResponse{
+			Message: err.Error(),
+		})
+	}
+
+	return c.String(http.StatusInternalServerError, err.Error())
 }
 
 func NewArticleController(articleService service.ArticleServiceInterface) ArticleController {
